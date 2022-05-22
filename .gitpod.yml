@@ -1,13 +1,12 @@
 tasks:
   - name: "Updating Container Packages"
-    before: |
-      sudo apt update && sudo apt upgrade -y
     init: |
+      sudo apt update && sudo apt upgrade -y
       pyenv install 3.10.0
       pyenv global 3.10.0
       pip install --upgrade pip
       pip install poetry
-      poerty install
+      poetry install
 
 # List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 # tasks:
