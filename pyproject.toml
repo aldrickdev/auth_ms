@@ -18,6 +18,9 @@ mypy = "^0.950"
 tox = "^3.25.0"
 requests = "^2.27.1"
 
+[tool.black]
+line-length = 88
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
