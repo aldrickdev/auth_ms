@@ -1,0 +1,20 @@
+tasks:
+  - name: "Updating Container Packages"
+    before: |
+      sudo apt update && sudo apt upgrade -y
+    init: |
+      pyenv install 3.10.0
+      pyenv global 3.10.0
+      pip install --upgrade pip
+      pip install poetry
+      poerty install
+
+# List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
+# tasks:
+#   - init: echo 'init script' # runs during prebuild
+#     command: echo 'start script'
+
+# List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
+# ports:
+#   - port: 3000
+#     onOpen: open-preview
