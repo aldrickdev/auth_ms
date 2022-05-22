@@ -1,0 +1,11 @@
+version: "3"
+services:
+  auth:
+    image: auth_ms
+    build: 
+      context: .. 
+      dockerfile: Dockerfile
+    volumes:
+      - ../auth_ms:/app
+    command: python /app/main.py
+  
