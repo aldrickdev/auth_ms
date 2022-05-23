@@ -1,8 +1,25 @@
-from fastapi import FastAPI, Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from auth_ms.helpers import fake_decode_token
 from auth_ms.models.user import User
+
+fake_users_db = {
+    "johndoe": {
+        "username": "johndoe",
+        "full_name": "John Doe",
+        "email": "johndoe@example.com",
+        "hashed_password": "fakehashedsecret",
+        "disabled": False,
+    },
+    "alice": {
+        "username": "alice",
+        "full_name": "Alice Wonderson",
+        "email": "alice@example.com",
+        "hashed_password": "fakehashedsecret2",
+        "disabled": True,
+    },
+}
 
 # Create the FastAPI app instance
 app = FastAPI()
@@ -51,3 +68,13 @@ async def protected(token: str = Depends(oauth2_scheme)):
 @app.get("/users/me")
 async def read_users_me(current_user: User = Depends(get_current_user)) -> User:
     return current_user
+
+
+@app.post("/token")
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user_dict = fake_users_db.get(form_data.username)
+
+    if not user_dict:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+
+    user = User
