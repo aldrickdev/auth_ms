@@ -71,10 +71,35 @@ async def read_users_me(current_user: User = Depends(get_current_user)) -> User:
 
 
 @app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[str:str]:
+    """This is the endpoint that users that need a token, will be directed too.
+
+    Args:
+        form_data (OAuth2PasswordRequestForm, optional): This is a dependency that
+        declares a form body with a username, password, an optional scope and an
+        optional grant_type.
+
+    Raises:
+        HTTPException: Raises a 400 error if the user doesn't exist in the database or
+        if the hashed password doesn't match the hashed pasword that was saved in the
+        database.
+
+    Returns:
+        dict[str:str]: This will return a dictionary with the structure of
+        {
+            "access_token": <username>,
+            "token_type": "bearer"
+        }
+    """
     user_dict = fake_users_db.get(form_data.username)
 
     if not user_dict:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
-    user = User
+    user = UserInDB(**user_dict)
+    hashed_password = fake_hash_password(form_data.password)
+
+    if not hashed_password == user.hashed_password:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+
+    return {"access_token": user.username, "token_type": "bearer"}
