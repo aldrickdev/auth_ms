@@ -1,50 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 
-from auth_ms.helpers import fake_decode_token
-from auth_ms.models.user import User
+from auth_ms.database import fake_users_db
+from auth_ms.helpers import fake_hash_password, get_current_active_user, oauth2_scheme
+from auth_ms.models import User, UserInDB
 
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "fakehashedsecret",
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "disabled": True,
-    },
-}
 
 # Create the FastAPI app instance
 app = FastAPI()
-
-# This is what it used to tell FastAPI that a route is protected and will need
-# the user to provide a token. The parameter tokenUrl tells the
-# OAuthPasswordBearer that to obtain a token, the user will need to use the
-# endpoint token.
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
-    """Returns the current user from the token provided
-
-    Args:
-        token (str, optional): This is the token that the oauth2_scheme returns
-        if it is provided in the request
-
-    Returns:
-        User: The user instance if it is found when decoding the token
-    """
-    # Get the user from the token
-    user = fake_decode_token(token)
-
-    return user
 
 
 @app.get("/")
@@ -66,12 +29,20 @@ async def protected(token: str = Depends(oauth2_scheme)):
 
 
 @app.get("/users/me")
-async def read_users_me(current_user: User = Depends(get_current_user)) -> User:
+async def read_users_me(current_user: User = Depends(get_current_active_user)) -> User:
+    """Returns the active user.
+
+    Args:
+        current_user (User, optional): The active user.
+
+    Returns:
+        User: the active user.
+    """
     return current_user
 
 
 @app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[str:str]:
+async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[str, str]:
     """This is the endpoint that users that need a token, will be directed too.
 
     Args:
@@ -85,7 +56,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[str:st
         database.
 
     Returns:
-        dict[str:str]: This will return a dictionary with the structure of
+        dict[str, str]: This will return a dictionary with the structure of:
         {
             "access_token": <username>,
             "token_type": "bearer"
@@ -99,7 +70,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> dict[str:st
     user = UserInDB(**user_dict)
     hashed_password = fake_hash_password(form_data.password)
 
-    if not hashed_password == user.hashed_password:
+    if hashed_password != user.hashed_password:
         raise HTTPException(status_code=400, detail="Incorrect username or password")
 
     return {"access_token": user.username, "token_type": "bearer"}
