@@ -41,3 +41,62 @@ def test_protected():
     )
     assert response.status_code == 200
     assert response.json() == {"token": "bad_token"}
+
+
+def test_token():
+    # Hitting endpoint with a GET Request
+    endpoint = "/token"
+    response = client.get(endpoint)
+    assert response.status_code == 405
+    assert response.json() == {"detail": "Method Not Allowed"}
+
+    # Hitting endpoint with a post request with no user credentials
+    response = client.post(endpoint)
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": [
+            {
+                "loc": ["body", "username"],
+                "msg": "field required",
+                "type": "value_error.missing",
+            },
+            {
+                "loc": ["body", "password"],
+                "msg": "field required",
+                "type": "value_error.missing",
+            },
+        ]
+    }
+
+    # Providing invalid user credentials
+
+    """
+    Reference:
+    curl -X 'POST' \
+    'http://localhost:3000/token' \
+    -H 'accept: application/json' \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -d 'grant_type=&username=invaliduser&password=password&scope=&client_secret='
+    """
+    response = client.post(
+        endpoint,
+        headers={
+            "accept": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data="grant_type=&username=invaliduser&password=password&scope=&client_secret=",
+    )
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Incorrect username or password"}
+
+    # Providing valid user credentials
+    response = client.post(
+        endpoint,
+        headers={
+            "accept": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+        data="grant_type=&username=johndoe&password=secret&scope=&client_secret=",
+    )
+    assert response.status_code == 200
+    assert response.json() == {"access_token": "johndoe", "token_type": "bearer"}
