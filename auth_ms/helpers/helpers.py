@@ -1,15 +1,67 @@
+from datetime import datetime, timedelta
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from passlib.context import CryptContext
+from jose import JWTError, jwt
+from pydantic import BaseModel
 
 from auth_ms.models import User, UserInDB
 from auth_ms.database import fake_users_db
 
+SECRET_KEY = "eea1262491e6fe8111d93cd7a8fc761516b16531bf4e0b92e82b1f7e9c74fe18"
+ALGORITHM = "HS256"
 
 # This is what it used to tell FastAPI that a route is protected and will need
 # the user to provide a token. The parameter tokenUrl tells the
 # OAuthPasswordBearer that to obtain a token, the user will need to use the
 # endpoint token.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None
+
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+
+def authenticate_user(fake_db, username: str, password: str):
+    user = get_user(fake_db, username)
+
+    if not user:
+        return False
+
+    if not verify_password(password, user.hashed_password):
+        return False
+
+    return user
+
+
+def create_access_token(data: dict, sk, algo, expires_delta: timedelta | None = None):
+    to_encode = data.copy()
+
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=15)
+
+    to_encode.update({"exp": expire})
+    encode_jwt = jwt.encode(to_encode, sk, algorithm=algo)
+
+    return encode_jwt
 
 
 def fake_hash_password(password: str) -> str:
@@ -69,16 +121,41 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     Returns:
         User: The user instance if it is found when decoding the token
     """
-    user = fake_decode_token(token)
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Authentication Credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+
+        if username is None:
+            raise credentials_exception
+
+        token_data = TokenData(username=username)
+
+    except JWTError:
+        raise credentials_exception
+
+    user = get_user(fake_users_db, username=token_data.username)
+
+    if user is None:
+        raise credentials_exception
 
     return user
+
+    # user = fake_decode_token(token)
+
+    # if not user:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="Invalid Authentication Credentials",
+    #         headers={"WWW-Authenticate": "Bearer"},
+    #     )
+
+    # return user
 
 
 async def get_current_active_user(
