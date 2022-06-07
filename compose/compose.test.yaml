@@ -2,11 +2,10 @@ version: "3"
 services:
   auth:
     image: auth_ms
-    build: 
+    build:
       context: ..
       dockerfile: Dockerfile.test
     volumes:
       - ../auth_ms:/app/auth_ms
       - ../tests:/app/tests
-    command: pytest /app
-  
+    command: pytest -vv

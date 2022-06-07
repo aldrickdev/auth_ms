@@ -8,6 +8,10 @@ authors = ["Aldrick Castro <aldrickdev@gmail.com>"]
 python = "^3.10"
 fastapi = "^0.78.0"
 uvicorn = "^0.17.6"
+python-multipart = "^0.0.5"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-dotenv = "^0.20.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
@@ -16,6 +20,9 @@ flake8 = "^4.0.1"
 mypy = "^0.950"
 tox = "^3.25.0"
 requests = "^2.27.1"
+
+[tool.black]
+line-length = 88
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
