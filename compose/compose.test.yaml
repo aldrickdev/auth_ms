@@ -8,4 +8,4 @@ services:
     volumes:
       - ../auth_ms:/app/auth_ms
       - ../tests:/app/tests
-    command: pytest
+    command: pytest -vv
