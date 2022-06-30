@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -7,7 +8,7 @@ from passlib.context import CryptContext
 from sqlmodel import Session
 
 from auth_ms.models import User, TokenData
-from auth_ms.database import engine
+from auth_ms.database import engine, get_user
 from auth_ms.env import SECRET_KEY, ALGORITHM
 
 
@@ -47,35 +48,28 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-# def authenticate_user(
-#     fake_db: db_type, username: str, password: str
-# ) -> UserInDB | bool:
-#     """Authenticates a user.
+def get_session() -> Session:
+    with Session(engine) as session:
+        yield session
 
-#     Args:
-#         fake_db (db_type): The database.
-#         username (str): The user that needs to be authenticated.
-#         password (str): The password the user provided.
 
-#     Returns:
-#         UserInDB | bool: Returns the user with its hashed password.
-#     """
+def authenticate_user(
+    db_session: Session, username: str, password: str
+) -> Optional[User]:
+    # Look to see if the user exists
+    user = get_user(db_session, username)
 
-#     # Look to see if the user exists
-#     user = get_user(fake_db, username)
+    # If the user doesn't exist then return None
+    if user is None:
+        return None
 
-#     # Check if we got a user back
-#     if not user:
-#         # Returns False if a user was not found
-#         return False
+    # Check if the password is correct
+    if not verify_password(password, user.hashed_password):
+        # Returns False if the password isn't correct
+        return None
 
-#     # Check if the password is correct
-#     if not verify_password(password, user.hashed_password):
-#         # Returns False if the password isn't correct
-#         return False
-
-#     # Returns the user
-#     return user
+    # Returns the user
+    return user
 
 
 def create_access_token(
@@ -112,25 +106,34 @@ def create_access_token(
     return jwt.encode(to_encode, secret_key, algorithm=algorithm)
 
 
-# def get_user(db: db_type, username: str) -> UserInDB | None:
-#     """Looks in the database for the user with the provided username.
+def get_user_from_jwt(token: str, db_session: Session) -> Optional[User]:
+    try:
+        # Decode the JWT
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
 
-#     Args:
-#         db (dict[str, dict[str, str  |  bool]]): The database.
-#         username (str): The username we will be searching for.
+        # Pull out the username from the payload
+        username: str = payload.get("sub")
 
-#     Returns:
-#         UserInDB or None: The user object if a user exist.
-#     """
+        # Checks to see if the username was found in the payload
+        if username is None:
+            return None
 
-#     # Checks to see if the user in found in the database
-#     if username in db:
-#         # Gets the user information and returns a user object
-#         user_dict = db[username]
-#         return UserInDB(**user_dict)
+        # Creates a TokenData object with the username
+        token_data = TokenData(username=username)
 
-#     # User was not found so return None
-#     return None
+    # If there was an error decoding the JWT raise error
+    except JWTError:
+        return None
+
+    # Look for the user in the database by the username in the JWT payload
+    user = get_user(db_session=db_session, username=token_data.username)
+
+    # If the user is not found raise exception
+    if user is None:
+        return None
+
+    # Returns the user
+    return user
 
 
 # def get_current_user(token: str = Depends(oauth2_scheme)) -> UserInDB:
@@ -202,8 +205,3 @@ def create_access_token(
 #         raise HTTPException(status_code=400, detail="Inactive User")
 
 #     return current_user
-
-
-def get_session():
-    with Session(engine) as session:
-        yield session

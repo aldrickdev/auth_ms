@@ -11,11 +11,9 @@ class UserCreate(SQLModel):
 
 
 class UserRead(SQLModel):
-    id: int
     username: str
     full_name: str
     email: str
-    hashed_password: str
     disabled: bool
 
 

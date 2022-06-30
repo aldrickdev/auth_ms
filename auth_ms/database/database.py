@@ -1,4 +1,8 @@
-from sqlmodel import create_engine, SQLModel
+from typing import Optional
+
+from sqlmodel import create_engine, SQLModel, Session, select
+
+from auth_ms.models import User
 
 sqlite_file_name = "db.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -10,14 +14,16 @@ def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
 
-# db_type = dict[str, dict[str, str | bool]]
+def get_user(db_session: Session, username: str) -> Optional[User]:
+    # Checks to see if the user in found in the database
+    statement = select(User).where(User.username == username)
+    results = db_session.exec(statement)
 
-# fake_users_db = {
-#     "johndoe": {
-#         "username": "johndoe",
-#         "full_name": "John Doe",
-#         "email": "johndoe@example.com",
-#         "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",
-#         "disabled": False,
-#     }
-# }
+    return results.first()
+
+
+def add_user(db_session: Session, user: User) -> User:
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
