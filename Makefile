@@ -14,7 +14,7 @@ test:
 test_build:
 	docker-compose -f compose/compose.test.yaml up --build
 
-:PHONY gen_req
-gen_req:
+:PHONY req
+req:
 	poetry export -o requirements/requirements.txt
 	poetry export --dev -o requirements/requirements.dev.txt
