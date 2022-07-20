@@ -23,7 +23,34 @@ def get_user(db_session: Session, username: str) -> Optional[User]:
 
 
 def add_user(db_session: Session, user: User) -> User:
+    """Adds a user
+
+    Args:
+        db_session (Session): _description_
+        user (User): _description_
+
+    Returns:
+        User: _description_
+    """
     db_session.add(user)
     db_session.commit()
     db_session.refresh(user)
+    return user
+
+
+def disable_user(db_session: Session, user: User) -> User:
+    """Sets the disabled field to True
+
+    Args:
+        db_session (Session): The database session
+        user (User): The user object
+
+    Returns:
+        User: The user that has been disabled
+    """
+    # Sets the disabled field to True
+    user.disabled = True
+    db_session.add(user)
+    db_session.commit()
+
     return user

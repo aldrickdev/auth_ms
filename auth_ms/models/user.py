@@ -14,6 +14,7 @@ class UserRead(SQLModel):
     username: str
     full_name: str
     email: str
+    role: str
     disabled: bool
 
 
@@ -23,4 +24,5 @@ class User(SQLModel, table=True):
     full_name: str = Field(index=True)
     email: str = Field(index=True)
     hashed_password: str = Field(default=None)
+    role: str = Field(default="standard")
     disabled: bool = Field(default=False)

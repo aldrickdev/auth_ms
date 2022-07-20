@@ -4,7 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 
-from auth_ms.database import create_db_and_tables, engine, add_user
+from auth_ms.database import create_db_and_tables, add_user, disable_user
 from auth_ms.env import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM
 from auth_ms.helpers import (
     get_user_from_jwt,
@@ -26,7 +26,7 @@ def on_startup():
     create_db_and_tables()
 
 
-@app.post("/api/v1/create_user/", response_model=UserRead)
+@app.post("/api/v1/user/create", response_model=UserRead)
 def create_user(
     provided_user: UserCreate, session: Session = Depends(get_session)
 ) -> UserRead:
@@ -70,35 +70,76 @@ def create_user(
     return new_user
 
 
-@app.get("/api/v1/user_details/", response_model=UserRead)
+@app.get("/api/v1/user/details/", response_model=UserRead)
 def user_details(
     session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)
 ) -> UserRead:
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    """Endpoint to pull logged in user's details
+
+    Args:
+        session (Session, optional): Database session. Defaults to Depends(get_session).
+        token (str, optional): JWT. Defaults to Depends(oauth2_scheme).
+
+    Raises:
+        HTTPException: 401 Error because the user couldn't be authenticated
+
+    Returns:
+        UserRead: The UserRead Object
+            {
+                "username": "<USERNAME>",
+                "full_name": "<FULL_NAME>",
+                "email": "<EMAIL>",
+                "role: "<ROLE>",
+                "disabled": <BOOL>
+            }
+    """
+    # Checks requesting details exists
     user = get_user_from_jwt(token, session)
 
     if user is None:
-        raise credentials_exception
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
     return user
 
 
-# @app.get("/api/v1/users/me")
-# async def read_users_me(current_user: User = Depends(get_current_active_user)) -> User:
-#     """Returns the user data.
+@app.get("/api/v1/user/disable/", response_model=UserRead)
+def user_disable(
+    session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)
+) -> UserRead:
+    """Endpoint used to disable a user
 
-#     Args:
-#         current_user (User): The user returned by the get_current_active_user
-#         dependency.
+    Args:
+        session (Session): The database session
+        token (str): The token used to authenticate the user
 
-#     Returns:
-#         User: The user.
-#     """
-#     return current_user
+    Raises:
+        HTTPException: 401 Error because the user couldn't be authenticated
+
+    Returns:
+        UserRead: The UserRead Object
+            {
+                "username": "<USERNAME>",
+                "full_name": "<FULL_NAME>",
+                "email": "<EMAIL>",
+                "role: "<ROLE>",
+                "disabled": <BOOL>
+            }
+    """
+    # Checks requesting details exists
+    user = get_user_from_jwt(token, session)
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return disable_user(session, user)
 
 
 @app.post("/token", response_model=Token)
