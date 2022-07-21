@@ -15,6 +15,15 @@ def create_db_and_tables():
 
 
 def get_user(db_session: Session, username: str) -> Optional[User]:
+    """Get User info
+
+    Args:
+        db_session (Session): The database session
+        username (str): The users username
+
+    Returns:
+        Optional[User]: Returns the user is its found
+    """
     # Checks to see if the user in found in the database
     statement = select(User).where(User.username == username)
     results = db_session.exec(statement)

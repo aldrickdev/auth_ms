@@ -15,10 +15,25 @@ from auth_ms.helpers import (
     get_password_hash,
 )
 from auth_ms.models import Token, UserCreate, UserRead, User
+from auth_ms.metadata import (
+    title,
+    description,
+    version,
+    contact,
+    license_info,
+    tags_metadata,
+)
 
 
 # Create the FastAPI app instance
-app = FastAPI()
+app = FastAPI(
+    title=title,
+    description=description,
+    version=version,
+    contact=contact,
+    license_info=license_info,
+    openapi_tags=tags_metadata,
+)
 
 
 @app.on_event("startup")
@@ -26,7 +41,12 @@ def on_startup():
     create_db_and_tables()
 
 
-@app.post("/api/v1/user/create", response_model=UserRead)
+@app.post(
+    "/api/v1/user/create",
+    tags=["Users"],
+    status_code=status.HTTP_201_CREATED,
+    response_model=UserRead,
+)
 def create_user(
     provided_user: UserCreate, session: Session = Depends(get_session)
 ) -> UserRead:
@@ -70,7 +90,12 @@ def create_user(
     return new_user
 
 
-@app.get("/api/v1/user/details/", response_model=UserRead)
+@app.get(
+    "/api/v1/user/details/",
+    status_code=status.HTTP_202_ACCEPTED,
+    tags=["Users"],
+    response_model=UserRead,
+)
 def user_details(
     session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)
 ) -> UserRead:
@@ -106,7 +131,12 @@ def user_details(
     return user
 
 
-@app.get("/api/v1/user/disable/", response_model=UserRead)
+@app.get(
+    "/api/v1/user/disable/",
+    status_code=status.HTTP_200_OK,
+    tags=["Users"],
+    response_model=UserRead,
+)
 def user_disable(
     session: Session = Depends(get_session), token: str = Depends(oauth2_scheme)
 ) -> UserRead:
@@ -142,7 +172,9 @@ def user_disable(
     return disable_user(session, user)
 
 
-@app.post("/token", response_model=Token)
+@app.post(
+    "/token", status_code=status.HTTP_201_CREATED, tags=["Token"], response_model=Token
+)
 async def login(
     session: Session = Depends(get_session),
     form_data: OAuth2PasswordRequestForm = Depends(),

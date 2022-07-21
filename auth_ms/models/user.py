@@ -9,6 +9,16 @@ class UserCreate(SQLModel):
     email: str
     password: str
 
+    class Config:
+        schema_extra = {
+            "example": {
+                "username": "bestUser",
+                "full_name": "Aldrick Castro",
+                "email": "aldrick@gmail.com",
+                "password": "password12345678",
+            }
+        }
+
 
 class UserRead(SQLModel):
     username: str
@@ -16,6 +26,17 @@ class UserRead(SQLModel):
     email: str
     role: str
     disabled: bool
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "username": "bestUser",
+                "full_name": "Aldrick Castro",
+                "email": "aldrick@gmail.com",
+                "role": "standard",
+                "disabled": "false",
+            }
+        }
 
 
 class User(SQLModel, table=True):
