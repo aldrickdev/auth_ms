@@ -1,12 +1,70 @@
-version: "3"
+version: "3.8"
+
 services:
-  auth:
+  app:
     image: auth_ms
+    container_name: app
     build:
       context: ..
       dockerfile: Dockerfile
+    depends_on:
+      - postgres
     volumes:
       - ../auth_ms:/app/auth_ms
     ports:
       - 3000:8888
+    labels:
+      com.datadoghq.ad.logs: '[{"source": "python", "service": "auth_ms"}]'
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
     command: uvicorn auth_ms.main:app --host=0.0.0.0 --port=8888 --reload
+
+  postgres:
+    image: postgres:14.4
+    container_name: postgres
+    restart: always
+    labels:
+      com.datadoghq.ad.check_names: '["postgres"]'
+      com.datadoghq.ad.logs: '[{"source": "postgresql", "service": "db"}]'
+      con.datadoghq.ad.instances : '[{"host": "%%host%%","port":"%%port%%"}]'
+    ports:
+      - 3001:5432
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: User
+      PGDATA: /var/lib/postgresql/data/pgdata
+
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - 8080:8080
+
+  dd-agent:
+    image: gcr.io/datadoghq/agent:7
+    container_name: dd-agent
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro 
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /proc/:/host/proc/:ro 
+      - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro 
+    environment:
+      - DD_API_KEY=${API_KEY}
+      - DD_SITE=datadoghq.com  
+      - DD_LOGS_ENABLED=true
+      - DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL=true
+      - DD_CONTAINER_EXCLUDE="name:dd-agent"
+
+# docker run -d --name dd-agent \
+# -v /var/run/docker.sock:/var/run/docker.sock:ro \
+# -v /proc/:/host/proc/:ro \
+# -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
+# -e DD_API_KEY=ffd0b0f90d5b51e1a429a5d33e18776e \
+# -e DD_SITE="datadoghq.com" \
+# gcr.io/datadoghq/agent:7

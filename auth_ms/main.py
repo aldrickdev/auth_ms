@@ -1,10 +1,16 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
+import logging.config
 
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from pythonjsonlogger import jsonlogger
 from sqlmodel import Session, select
 
-from auth_ms.database import create_db_and_tables, add_user, disable_user
+from auth_ms.database import (
+    create_db_and_tables,
+    add_user,
+    disable_user,
+)
 from auth_ms.env import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM
 from auth_ms.helpers import (
     get_user_from_jwt,
@@ -24,6 +30,27 @@ from auth_ms.metadata import (
     tags_metadata,
 )
 
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+
+
+class CustomJsonFormatter(jsonlogger.JsonFormatter):
+    def add_fields(self, log_record, record, message_dict):
+        super(CustomJsonFormatter, self).add_fields(log_record, record, message_dict)
+
+        log_record["datetime"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
+        if log_record["level"]:
+            log_record["level"] = log_record["level"].upper()
+        else:
+            log_record["level"] = record.levelname
+        log_record["env"] = "test"
+
+
+formatter = CustomJsonFormatter("%(datetime)s %(level)s %(message)s")
+
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 # Create the FastAPI app instance
 app = FastAPI(
@@ -38,6 +65,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 def on_startup():
+    logger.info("This New Application is Starting...")
     create_db_and_tables()
 
 
@@ -71,11 +99,10 @@ def create_user(
     """
     # New User
     new_user = User.from_orm(provided_user)
-
+    
     # Check if the user trying to be created already exist
     statement = select(User).where(User.username == provided_user.username)
     results = session.exec(statement)
-
     if results.first() is not None:
         print(f"Username already exist: {results}")
 
@@ -87,6 +114,9 @@ def create_user(
     # User doesn't exist, create it
     new_user.hashed_password = get_password_hash(provided_user.password)
     new_user = add_user(session, new_user)
+
+    logger.info("New User created", extra=vars(new_user))
+
     return new_user
 
 
