@@ -65,6 +65,6 @@ services:
 # -v /var/run/docker.sock:/var/run/docker.sock:ro \
 # -v /proc/:/host/proc/:ro \
 # -v /sys/fs/cgroup/:/host/sys/fs/cgroup:ro \
-# -e DD_API_KEY=ffd0b0f90d5b51e1a429a5d33e18776e \
+# -e DD_API_KEY=$KEY \
 # -e DD_SITE="datadoghq.com" \
 # gcr.io/datadoghq/agent:7
