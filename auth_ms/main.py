@@ -17,8 +17,8 @@ from auth_ms.env import SECRET_KEY, ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM
 app = FastAPI()
 
 
-@app.get("/users/me")
-async def read_users_me(current_user: User = Depends(get_current_active_user)) -> User:
+@app.get("/v1/user-details")
+async def user_details(current_user: User = Depends(get_current_active_user)) -> User:
     """Returns the user data.
 
     Args:
@@ -31,8 +31,8 @@ async def read_users_me(current_user: User = Depends(get_current_active_user)) -
     return current_user
 
 
-@app.post("/token", response_model=Token)
-async def login(form_data: OAuth2PasswordRequestForm = Depends()) -> Token:
+@app.post("/v1/user/login", response_model=Token)
+async def user_login(form_data: OAuth2PasswordRequestForm = Depends()) -> Token:
     """Endpoint used to create a token for the user
 
     Args:
