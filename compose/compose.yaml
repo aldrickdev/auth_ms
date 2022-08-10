@@ -22,6 +22,17 @@ services:
       - PYTHONUNBUFFERED=${PYTHONUNBUFFERED}
     command: uvicorn auth_ms.main:app --host=0.0.0.0 --port=8888 --reload
 
+  db:
+    image: mongo
+    container_name: db
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PWD}
+      - MONGO_INITDB_DATABASE=${MONGO_DB}
+    volumes:
+      - ./mongo_setup.js:/docker-entrypoint-initdb.d/mongo_setup.js
+
   postgres:
     image: postgres:14.4
     container_name: postgres
