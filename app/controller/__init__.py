@@ -1,0 +1,9 @@
+from controller.new_email import router as new_email_router
+from controller.create_user import router as create_user_router
+from controller.get_token import router as get_token_router
+from controller.get_details import router as get_details_router
+from controller.edit_user import router as edit_user_router
+from controller.disable_user import router as disable_user_router
+from controller.forgot_password import router as forgot_password_router
+from controller.reset_password import router as reset_password_router
+from controller.update_password import router as update_password_router

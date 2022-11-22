@@ -1,0 +1,19 @@
+version: "3.8"
+
+services:
+  app: 
+    image: greymint-auth:0.0.1
+    container_name: app
+    restart: always
+    ports:
+      - 3000:3000 # host to container
+    environment:
+      - ENV=${ENV}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+      - MONGO_CONNECTION=${MONGO_CONNECTION}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_SEND_EMAIL_ACCESS_KEY=${AWS_SEND_EMAIL_ACCESS_KEY}
+      - AWS_SEND_EMAIL_SECRET_KEY=${AWS_SEND_EMAIL_SECRET_KEY}

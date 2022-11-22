@@ -1,5 +1,0 @@
-FROM python:3.10.0
-WORKDIR /app/auth_ms
-COPY requirements/requirements.dev.txt .
-RUN pip install -r requirements.dev.txt
-WORKDIR /app

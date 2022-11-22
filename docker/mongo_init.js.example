@@ -1,0 +1,7 @@
+// Example of some initial mongodb setup
+
+db.createCollection("<COLLECTION_NAME>")
+
+db.User.insertOne({
+    <ADMIN_DETAILS>
+})

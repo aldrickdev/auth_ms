@@ -1,28 +1,36 @@
 [tool.poetry]
-name = "auth_ms"
-version = "0.1.0"
-description = ""
-authors = ["Aldrick Castro <aldrickdev@gmail.com>"]
+name = "auth"
+version = "0.0.1"
+description = "This project is a simple API that provides basic Authentication and Authorization."
+authors = ["aldrickdev <aldrickdev@gmail.com>"]
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.78.0"
-uvicorn = "^0.17.6"
+fastapi = "^0.81.0"
+uvicorn = {extras = ["standard"], version = "^0.18.3"}
+beanie = "^1.11.9"
+email-validator = "^1.2.1"
+pytz = "^2022.2.1"
 python-multipart = "^0.0.5"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
-passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 python-dotenv = "^0.20.0"
+types-python-jose = "^3.3.4"
+motor-stubs = "^1.7.1"
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+boto3 = "^1.24.84"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
-black = "^22.3.0"
-flake8 = "^4.0.1"
-mypy = "^0.950"
-tox = "^3.25.0"
-requests = "^2.27.1"
+black = "^22.6.0"
+mypy = "^0.971"
+flake8 = "^5.0.4"
+httpx = "^0.23.0"
+pytest-asyncio = "^0.19.0"
+tox = "^3.25.1"
 
 [tool.black]
-line-length = 88
+line-length = 100
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
